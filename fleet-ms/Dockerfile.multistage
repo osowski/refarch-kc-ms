@@ -30,3 +30,6 @@ RUN \
     && java -jar /tmp/license.jar -acceptLicense /opt/ibm \
     && rm /tmp/license.jar; \
   fi
+
+# Fix permissions so random UID can write output
+RUN chmod -R ugo+rw /opt/ibm/wlp/output
