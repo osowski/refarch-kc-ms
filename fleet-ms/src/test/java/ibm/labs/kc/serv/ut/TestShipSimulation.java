@@ -27,23 +27,23 @@ import ibm.labs.kc.simulator.ShipSimulator;
  *
  */
 public class TestShipSimulation  {
-   
+
 	 @Mock
 	 static ShipPositionProducer positionProducerMock;
 	 @Mock
 	 static ContainerMetricsProducer containerProducerMock;
-	 
-	 @Rule public MockitoRule mockitoRule = MockitoJUnit.rule(); 
-	 
+
+	 @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
+
 	 public static ShipService serv;
-	
-	
+
+
 	@Before
 	public   void init() {
-		 ShipSimulator s = new ShipSimulator(positionProducerMock,containerProducerMock);		 
-		 serv =  new ShipService(DAOFactory.buildOrGetShipDAOInstance("Fleet.json"),s);
+		 ShipSimulator s = new ShipSimulator(positionProducerMock,containerProducerMock);
+		 serv =  new ShipService(DAOFactory.buildShipDAOInstance("Fleet.json"),s);
 	}
-	
+
 	public void printShip(Ship s) {
 		for (List<Container> row : s.getContainers()) {
 			for (Container c : row) {
@@ -52,8 +52,8 @@ public class TestShipSimulation  {
 			System.out.println("\n---------------------");
 		}
 	}
-	
-	
+
+
 	@Test
 	public void validateContainerFire() throws InterruptedException {
 		System.out.println("Validate containers fire");
@@ -61,7 +61,7 @@ public class TestShipSimulation  {
 		ctl.setNumberOfContainers(4);
 		ctl.setNumberOfMinutes(.25);
 		Response res = serv.performSimulation(ctl);
-		Ship s = (Ship)res.getEntity();	
+		Ship s = (Ship)res.getEntity();
 		Assert.assertTrue(s.getContainers().get(0).get(2).getStatus().equals(Container.STATUS_FIRE));
 		//verify(positionPublisherMock).publishShipPosition(null);
 		Thread.sleep(30000);
@@ -79,5 +79,5 @@ public class TestShipSimulation  {
 		Ship s = (Ship)res.getEntity();
 		printShip(s);
 	}
-	
+
 }
