@@ -20,7 +20,12 @@ public class DAOFactory {
 
 	public static FleetDAO buildOrGetFleetDAO(String fleetFileName) {
 		if (fleetDAO == null) {
-			 fleetDAO = new FleetDAOMockup(fleetFileName);
+			System.out.println("######### REO 									#########");
+			System.out.println("######### buildOrGetFleetDAO(String fleetFileName) #########");
+			System.out.println("######### fleetDAO is NULL  #########");
+			System.out.println("######### Loading new fleetDAO from " + fleetFileName + "#########");
+			System.out.println("######### REO 									#########");
+			fleetDAO = new FleetDAOMockup(fleetFileName);
 		 }
 		return fleetDAO;
 	}
@@ -40,6 +45,11 @@ public class DAOFactory {
 
 	public static ShipDAO buildOrGetShipDAOInstance(String fileName) {
 		if (shipDAO == null) {
+			System.out.println("######### REO 									#########");
+			System.out.println("######### buildOrGetShipDAOInstance(String fileName) #########");
+			System.out.println("######### shipDAO is NULL  #########");
+			System.out.println("######### Loading new shipDAO from " + fileName + "#########");
+			System.out.println("######### REO 									#########");
 			shipDAO = new ShipDAOMockup();
 			for (Fleet f : DAOFactory.buildOrGetFleetDAO(fileName).getFleets()) {
 				for (Ship s : f.getShips()) {
