@@ -2,9 +2,9 @@ apiVersion: appsody.dev/v1beta1
 kind: AppsodyApplication
 metadata:
   annotations:
-    commit.image.appsody.dev/author: Jesus Almaraz <almarazj@ie.ibm.com>
+    commit.image.appsody.dev/author: Rick O <rosowski@gmail.com>
     commit.image.appsody.dev/committer: GitHub <noreply@github.com>
-    commit.image.appsody.dev/contextDir: C:\dev\refarch\refarch-kc-ms\voyages-ms
+    commit.image.appsody.dev/contextDir: /voyages-ms
     commit.image.appsody.dev/date: Tue Jul 28 14:06:26 2020 +0100
     commit.image.appsody.dev/message: Remove KAFKA_APIKEY from base app-deploy.yaml
     commit.stack.appsody.dev/contextDir: /incubator/nodejs-express
@@ -16,7 +16,6 @@ metadata:
     image.opencontainers.org/revision: 0fbbf80392ec606d49940396e54119143767fb44
     image.opencontainers.org/source: |-
       https://github.com/djones6/refarch-kc-ms/tree/remove-apikey
-      ??
     image.opencontainers.org/url: https://github.com/djones6/refarch-kc-ms
     stack.appsody.dev/authors: Gireesh Punathil <gireeshpunathil>
     stack.appsody.dev/configured: docker.io/appsody/nodejs-express:0.4
@@ -32,6 +31,7 @@ metadata:
     stack.appsody.dev/url: https://github.com/appsody/stacks/tree/master/incubator/nodejs-express
   creationTimestamp: null
   labels:
+    app.appsody.dev/name: refarch-kc
     app.kubernetes.io/part-of: refarch-kc
     image.opencontainers.org/title: voyages-ms
     stack.appsody.dev/id: nodejs-express
@@ -48,7 +48,7 @@ spec:
       configMapKeyRef:
         key: brokers
         name: kafka-brokers
-  - name: ORDER_TOPIC
+  - name: KCSOLUTION_ORDERS_TOPIC
     valueFrom:
       configMapKeyRef:
         key: ordersTopic
@@ -79,3 +79,4 @@ spec:
     type: NodePort
   stack: nodejs-express
   version: 1.0.0
+status: {}
