@@ -25,7 +25,7 @@ public class DAOFactory {
 
 	public static FleetDAO buildOrGetFleetDAO(String fleetFileName) {
 		if (fleetDAO == null) {
-			fleetDAO = buildFleetDAO(fleetFileName);
+			fleetDAO = new FleetDAOMockup(fleetFileName);
 		 }
 		return fleetDAO;
 	}
