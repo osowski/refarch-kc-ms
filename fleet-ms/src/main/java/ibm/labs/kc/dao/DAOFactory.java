@@ -55,7 +55,12 @@ public class DAOFactory {
 
 	public static ShipDAO buildOrGetShipDAOInstance(String fileName) {
 		if (shipDAO == null) {
-			shipDAO = buildShipDAOInstance(fileName);
+			shipDAO = new ShipDAOMockup();
+			for (Fleet f : DAOFactory.buildOrGetFleetDAO(fileName).getFleets()) {
+				for (Ship s : f.getShips()) {
+					shipDAO.save(s);
+				}
+			}
 		 }
 		return shipDAO;
 	}
