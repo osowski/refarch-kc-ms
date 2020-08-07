@@ -6,7 +6,7 @@ import ibm.labs.kc.model.Ship;
 public class DAOFactory {
 	 private static FleetDAO fleetDAO = null;
 	 private static ShipDAO shipDAO = null;
-	 
+
 	 /**
 	  * This method may change to use a DAO implementation going to a real DB as default
 	  * @return
@@ -17,15 +17,15 @@ public class DAOFactory {
 		 }
 		return fleetDAO;
 	 }
-	
+
 	public static FleetDAO buildOrGetFleetDAO(String fleetFileName) {
 		if (fleetDAO == null) {
 			 fleetDAO = new FleetDAOMockup(fleetFileName);
 		 }
 		return fleetDAO;
 	}
-	
-	
+
+
 	public static ShipDAO buildOrGetShipDAOInstance() {
 		if (shipDAO == null) {
 			shipDAO = new ShipDAOMockup();
@@ -47,6 +47,11 @@ public class DAOFactory {
 				}
 			}
 		 }
+
+		 System.out.println("######### REO 									#########");
+		 System.out.println("######### DAOFactory::buildOrGetShipDAOInstance  #########");
+		 System.out.println(shipDAO);
+		 System.out.println("######### REO 									#########");
 		return shipDAO;
 	}
 }
