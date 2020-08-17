@@ -35,6 +35,8 @@ jobs:
         validate_secret DOCKER_REPOSITORY ${DOCKER_REPOSITORY}
         validate_secret DOCKER_IMAGE_FLEET ${DOCKER_IMAGE_FLEET}
         validate_secret DOCKER_IMAGE_VOYAGES ${DOCKER_IMAGE_VOYAGES}
+        validate_secret GITOPS_EMAIL ${GITOPS_EMAIL}
+        validate_secret GITOPS_TOKEN ${GITOPS_TOKEN}
 
         if [ "${FAIL}" = "true" ]; then
           exit 1
@@ -45,6 +47,9 @@ jobs:
         DOCKER_REPOSITORY: ${{ secrets.DOCKER_REPOSITORY }}
         DOCKER_IMAGE_FLEET: ${{ secrets.DOCKER_IMAGE_FLEET }}
         DOCKER_IMAGE_VOYAGES: ${{ secrets.DOCKER_IMAGE_VOYAGES }}
+        GITOPS_EMAIL: ${{ secrets.GITOPS_EMAIL }}
+        GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+
   build-docker-images:
     needs:
       validate-docker-secrets
@@ -57,21 +62,15 @@ jobs:
       env:
         DEFAULT_BUMP: patch
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install Appsody CLI
+      id: install-appsody-cli
+      uses: djones6/appsody-install-action@master
     - name: Build the fleet-ms docker image
       id: build-fleet-image
       run: |
         IMAGE_NAME="${DOCKER_R}/${DOCKER_I}"
         docker login -u ${DOCKER_U} -p ${DOCKER_P}
-        
-        echo "Installing Appsody..."
-        APPSODY_RELEASE=$(curl -s https://api.github.com/repos/appsody/appsody/releases/latest \
-        | grep "browser_download_url.*deb" \
-        | cut -d : -f 2,3 \
-        | tr -d \")
-        echo "Latest Appsody Release found: ${APPSODY_RELEASE}"
-        wget ${APPSODY_RELEASE}
-        sudo apt install -f ./appsody_*_amd64.deb
-        
+
         echo "Build and push the docker image"
         cd ${WORKDIR}
         appsody build -v --tag ${IMAGE_NAME}:${IMAGE_TAG} --push
@@ -85,20 +84,16 @@ jobs:
         WORKDIR: fleet-ms
         DOCKERFILE: Dockerfile.multistage
         IMAGE_TAG: ${{ steps.bump-version-action.outputs.new_tag }}
+    - name: Save fleet-ms app-deploy.yaml
+      uses: actions/upload-artifact@v2
+      with:
+        name: fleetms-app-deploy.yaml
+        path: fleet-ms/app-deploy.yaml
     - name: Build the voyages-ms docker image
       id: build-voyages-image
       run: |
         IMAGE_NAME="${DOCKER_R}/${DOCKER_I}"
         docker login -u ${DOCKER_U} -p ${DOCKER_P}
-
-        echo "Installing Appsody..."
-        APPSODY_RELEASE=$(curl -s https://api.github.com/repos/appsody/appsody/releases/latest \
-        | grep "browser_download_url.*deb" \
-        | cut -d : -f 2,3 \
-        | tr -d \")
-        echo "Latest Appsody Release found: ${APPSODY_RELEASE}"
-        wget ${APPSODY_RELEASE}
-        sudo apt install -f ./appsody_*_amd64.deb
 
         echo "Build and push the docker image"
         cd ${WORKDIR}
@@ -113,6 +108,11 @@ jobs:
         WORKDIR: voyages-ms
         DOCKERFILE: Dockerfile
         IMAGE_TAG: ${{ steps.bump-version-action.outputs.new_tag }}
+    - name: Save voyages-ms app-deploy.yaml
+      uses: actions/upload-artifact@v2
+      with:
+        name: voyagesms-app-deploy.yaml
+        path: voyages-ms/app-deploy.yaml
     - name: Webhook to GitOps repo
       id: gitops-repo-webhook
       uses: osowski/repository-dispatch@v1
@@ -122,3 +122,39 @@ jobs:
         repository: ibm-cloud-architecture/refarch-kc-gitops
         event-type: gitops-refresh
         client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "source": "${{ github.repository }}"}'
+
+  update-gitops:
+    needs:
+      build-docker-images
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure git client
+      id: configure-git
+      uses: djones6/git-config-action@master
+      with:
+        user-email: ${{ secrets.GITOPS_EMAIL }}
+        gitops-token: ${{ secrets.GITOPS_TOKEN }}
+    - name: Retrieve fleet-ms app-deploy.yaml
+      uses: actions/download-artifact@v2
+      with:
+        name: fleetms-app-deploy.yaml
+        path: fleetms
+    - name: Update fleet-ms app-deploy.yaml in GitOps repo
+      id: update-fleet-gitops
+      uses: djones6/appsody-gitops-update-action@master
+      with:
+        service-name: fleetms
+        github-org: ibm-cloud-architecture
+        gitops-repo-name: refarch-kc-gitops
+    - name: Retrieve voyages-ms app-deploy.yaml
+      uses: actions/download-artifact@v2
+      with:
+        name: voyagesms-app-deploy.yaml
+        path: voyagesms
+    - name: Update voyages-ms app-deploy.yaml in GitOps repo
+      id: update-voyages-gitops
+      uses: djones6/appsody-gitops-update-action@master
+      with:
+        service-name: voyagesms
+        github-org: ibm-cloud-architecture
+        gitops-repo-name: refarch-kc-gitops
