@@ -4,7 +4,7 @@ on:
     branches:
       - master
     paths-ignore:
-      - 'docs/**'
+      - 'docs-archive/**'
       - '*/chart/**'
 
 jobs:
@@ -37,6 +37,7 @@ jobs:
         validate_secret DOCKER_IMAGE_VOYAGES ${DOCKER_IMAGE_VOYAGES}
         validate_secret GITOPS_EMAIL ${GITOPS_EMAIL}
         validate_secret GITOPS_TOKEN ${GITOPS_TOKEN}
+        validate_secret GITOPS_ORG ${GITOPS_ORG}
 
         if [ "${FAIL}" = "true" ]; then
           exit 1
@@ -49,6 +50,7 @@ jobs:
         DOCKER_IMAGE_VOYAGES: ${{ secrets.DOCKER_IMAGE_VOYAGES }}
         GITOPS_EMAIL: ${{ secrets.GITOPS_EMAIL }}
         GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        GITOPS_ORG: ${{ secrets.GITOPS_ORG }}
 
   build-docker-images:
     needs:
@@ -58,13 +60,13 @@ jobs:
     - uses: actions/checkout@master
     - name: Bump version and push tag
       id: bump-version-action
-      uses: osowski/github-tag-action@master
+      uses: ibm-cloud-architecture/github-tag-action@master
       env:
         DEFAULT_BUMP: patch
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Install Appsody CLI
       id: install-appsody-cli
-      uses: djones6/appsody-install-action@master
+      uses: ibm-cloud-architecture/appsody-install-action@master
     - name: Build the fleet-ms docker image
       id: build-fleet-image
       run: |
@@ -113,16 +115,6 @@ jobs:
       with:
         name: voyagesms-app-deploy.yaml
         path: voyages-ms/app-deploy.yaml
-    - name: Webhook to GitOps repo
-      id: gitops-repo-webhook
-      uses: osowski/repository-dispatch@v1
-      if: startsWith(github.repository, 'ibm-cloud-architecture/')
-      with:
-        token: ${{ secrets.WEBHOOK_TOKEN }}
-        repository: ibm-cloud-architecture/refarch-kc-gitops
-        event-type: gitops-refresh
-        client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "source": "${{ github.repository }}"}'
-
   update-gitops:
     needs:
       build-docker-images
@@ -130,7 +122,7 @@ jobs:
     steps:
     - name: Configure git client
       id: configure-git
-      uses: djones6/git-config-action@master
+      uses: ibm-cloud-architecture/git-config-action@master
       with:
         user-email: ${{ secrets.GITOPS_EMAIL }}
         gitops-token: ${{ secrets.GITOPS_TOKEN }}
@@ -141,10 +133,10 @@ jobs:
         path: fleetms
     - name: Update fleet-ms app-deploy.yaml in GitOps repo
       id: update-fleet-gitops
-      uses: djones6/appsody-gitops-update-action@master
+      uses: ibm-cloud-architecture/appsody-gitops-update-action@master
       with:
         service-name: fleetms
-        github-org: ibm-cloud-architecture
+        github-org: ${{ secrets.GITOPS_ORG }}
         gitops-repo-name: refarch-kc-gitops
     - name: Retrieve voyages-ms app-deploy.yaml
       uses: actions/download-artifact@v2
@@ -153,8 +145,8 @@ jobs:
         path: voyagesms
     - name: Update voyages-ms app-deploy.yaml in GitOps repo
       id: update-voyages-gitops
-      uses: djones6/appsody-gitops-update-action@master
+      uses: ibm-cloud-architecture/appsody-gitops-update-action@master
       with:
         service-name: voyagesms
-        github-org: ibm-cloud-architecture
+        github-org: ${{ secrets.GITOPS_ORG }}
         gitops-repo-name: refarch-kc-gitops
